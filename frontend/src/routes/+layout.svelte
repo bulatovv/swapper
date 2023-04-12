@@ -1,5 +1,6 @@
 <script>
     import "../app.css";
+    import "bootstrap-icons/font/bootstrap-icons.css";
 </script>
 
 <header class="flex content-center justify-center sticky top-0 z-30 w-full h-14 px-4 pt-1 pb-2 mb-6 shadow-lg bg-orange-500">

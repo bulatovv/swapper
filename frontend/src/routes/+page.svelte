@@ -1,3 +1,11 @@
-<p class="font-bold text-8xl">
-    Hello, world!
-</p>
+<script>
+    import AdvertCard from '$lib/AdvertCard.svelte';
+
+    /** @type {import('./$types').PageData} */
+    export let data;
+</script>
+
+
+{#each data.adverts as advert (advert.id)}
+    <AdvertCard advert={advert} />
+{/each}
