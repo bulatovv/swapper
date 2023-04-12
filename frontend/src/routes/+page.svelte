@@ -5,7 +5,8 @@
     export let data;
 </script>
 
-
-{#each data.adverts as advert (advert.id)}
-    <AdvertCard advert={advert} />
-{/each}
+<div class="grid grid-cols-3 gap-y-7">
+    {#each data.adverts as advert (advert.id)}
+        <AdvertCard advert={advert} />
+    {/each}
+</div>
