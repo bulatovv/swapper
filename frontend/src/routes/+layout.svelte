@@ -1,5 +1,21 @@
 <script>
-  import "../app.css";
+    import "../app.css";
 </script>
 
-<slot />
+<header class="flex content-center justify-center sticky top-0 z-30 w-full h-14 px-4 pt-1 pb-2 mb-6 shadow-lg bg-orange-500">
+    <div class="w-2/3">
+        <div class="font-sans font-semibold text-4xl text-slate-100">
+            <span class="shadow-md">🔁</span>
+            Обменус
+        </div>
+    </div>
+</header>
+
+<main class="flex justify-center">
+    <div class="w-2/3">
+        <slot/>
+    </div>    
+</main>
+
+<footer>
+</footer>
