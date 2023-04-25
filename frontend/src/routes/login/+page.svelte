@@ -27,5 +27,11 @@
                 <i class="bi bi-arrow-right font-bold"></i>
             </button>
         </div>
+
+        <div class="flex">
+            <p class = "ml-auto">
+                у вас нет аккаунта?
+            </p>
+        </div>
     </form>
 </div>
