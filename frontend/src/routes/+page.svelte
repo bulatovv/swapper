@@ -5,7 +5,7 @@
     export let data;
 </script>
 
-<div class="grid grid-cols-3 gap-y-7">
+<div class="grid justify-items-center grid-cols-3 gap-y-7">
     {#each data.adverts as advert (advert.id)}
         <AdvertCard advert={advert} />
     {/each}
