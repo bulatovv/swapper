@@ -1,5 +1,5 @@
 <script>
-    export let advert;
+    export let reply;
 </script>
 
 <style>
@@ -18,24 +18,25 @@ button {
 
 <div class="max-w-sm border border-gray-200 rounded-lg shadow">
     <div class="relative">
-        <img class="rounded-t-lg" src="{advert.image}" alt="{advert.title}"/>
+        <img class="rounded-t-lg" src="{reply.image}" alt="{reply.title}"/>
         <div class="absolute bottom-5 right-5 p-1 rounded-md text-white bg-gray-900/[0.50]">
             <i class="bi bi-geo-alt-fill"></i>
-            {advert.community}
+            {reply.community}
         </div>
     </div>
 
     <div class="p-5">
         <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">
-            {advert.title}
+            {reply.title}
             <p>
-            author: {advert.user}
+            author: {reply.user}
         </h5>
         <p class="mb-3 font-normal text-gray-700 line-clamp-3">
-            {advert.description}
+            {reply.description}
         </p>
+        ТУТ БУДЕТ МУЛЬТИСЕЛЕКТ ДЛЯ ВЫБОРА ТОГО ЧТО МЫ ХОТИМ ВЗАМЕН
         <hr>
-        <button class="not-offer-button">Не предлагать подобное</button>
-        <button class="want-button">Хочу</button>
+        <button class="not-offer-button">Ничего не понравилось</button>
+        <button class="want-button">Выбрать понравившееся</button>
     </div>
 </div>
