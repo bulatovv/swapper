@@ -9,6 +9,9 @@
             <i class="bi bi-repeat"></i>
             Обменус
         </div>
+        <div class="font-sans font-semibold text-2xl text-slate-100 ml-auto mr-auto">
+            Создать объявление
+        </div>
         <div class="font-sans font-semibold text-2xl text-slate-100 ml-auto ">
             Вход
         </div>

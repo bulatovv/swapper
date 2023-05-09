@@ -9,10 +9,16 @@ button {
 
 .want-button {
   @apply text-[green] float-right border-[green];
+  &:hover {
+    @apply bg-[green] text-[white];
+  }
 }
 
 .not-offer-button {
   @apply text-[red] float-left border-[red];
+  &:hover {
+    @apply bg-[red] text-[white];
+  }
 }
 
 .right {
