@@ -40,7 +40,6 @@ button {
         <p class="mb-3 font-normal text-gray-700 line-clamp-3">
             {reply.description}
         </p>
-        ТУТ БУДЕТ МУЛЬТИСЕЛЕКТ ДЛЯ ВЫБОРА ТОГО ЧТО МЫ ХОТИМ ВЗАМЕН
         <hr>
         <button class="not-offer-button">Ничего не понравилось</button>
         <button class="want-button">Выбрать понравившееся</button>
