@@ -2,9 +2,12 @@ from tortoise.models import Model
 from tortoise import fields
 
 
+
 class User(Model):
     id = fields.IntField(pk=True)
     email = fields.CharField(unique=True, index=True, max_length=320)
+    verified_at = fields.DatetimeField(null=True)
+    password_hash = fields.CharField(max_length=72)
     name = fields.TextField()
     
     items: fields.ReverseRelation["Item"]
@@ -30,3 +33,13 @@ class Trade(Model):
     items: fields.ManyToManyRelation[Item] = fields.ManyToManyField(
         "models.Item", through = "item_trade"
     )
+
+class RegistrationConfirm(Model):
+    token = fields.CharField(pk=True, index=True, max_length=64)
+    user: fields.OneToOneRelation[User] = fields.OneToOneField(
+        "models.User"
+    )
+
+class AuthToken(Model):
+    pass
+    
