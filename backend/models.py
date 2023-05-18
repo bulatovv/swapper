@@ -41,5 +41,8 @@ class RegistrationConfirm(Model):
     )
 
 class AuthToken(Model):
-    pass
+    token = fields.CharField(pk=True, index=True, max_length=64)
+    user: fields.OneToOneRelation[User] = fields.OneToOneField(
+        "models.User"
+    )
     
