@@ -8,7 +8,6 @@ app = FastAPI()
 
 app.include_router(router)
 
-
 register_tortoise(
     app,
     config=TORTOISE_ORM,

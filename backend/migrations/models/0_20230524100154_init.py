@@ -35,13 +35,13 @@ CREATE TABLE IF NOT EXISTS "aerich" (
     "app" VARCHAR(100) NOT NULL,
     "content" JSON NOT NULL
 );
-CREATE TABLE IF NOT EXISTS "user_trade" (
-    "trade_id" INT NOT NULL REFERENCES "trade" ("id") ON DELETE CASCADE,
-    "user_id" INT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE
-);
 CREATE TABLE IF NOT EXISTS "item_trade" (
     "trade_id" INT NOT NULL REFERENCES "trade" ("id") ON DELETE CASCADE,
     "item_id" INT NOT NULL REFERENCES "item" ("id") ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS "user_trade" (
+    "trade_id" INT NOT NULL REFERENCES "trade" ("id") ON DELETE CASCADE,
+    "user_id" INT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE
 );"""
 
 

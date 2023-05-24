@@ -1,9 +1,9 @@
-from typing import Annotated
+from typing import Annotated, List
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from secrets import token_urlsafe
-from models import User, Item, Trade, RegistrationConfirm, RegistrationConfirm, AuthToken
+from models import User, Item, Trade, RegistrationConfirm, RegistrationConfirm, AuthToken, Users_Pydantic
 from schemas import UserRegistration, ItemCreation
 from utils import password_hash, password_verify
 from datetime import datetime
@@ -34,7 +34,7 @@ async def register_user(user_registration: UserRegistration):
 
 
 @router.post("/users/{user_id}/verification", status_code=201)
-async def confirm_registration(token: str): 
+async def confirm_registration(token: str, user_id:int):
     user = await User.get_or_none(id=user_id)
 
     if user is None:
@@ -53,6 +53,14 @@ async def confirm_registration(token: str):
     await user.save()
 
 
+
+
+# @router.get("/items", status_code=201,response_model=Users_Pydantic)
+# async def get_items():
+#     return await Users_Pydantic.from_queryset(User.all())
+@router.post("/items", status_code=201,response_model=Users_Pydantic)
+async def get_items():
+    return await Users_Pydantic.from_queryset(User.all())
 @router.post("/auth-tokens", status_code=201)
 async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
     user = await User.get_or_none(email=form_data.username)

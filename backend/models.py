@@ -1,3 +1,4 @@
+from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 from tortoise.models import Model
 from tortoise import fields
 
@@ -9,9 +10,17 @@ class User(Model):
     verified_at = fields.DatetimeField(null=True)
     password_hash = fields.CharField(max_length=72)
     name = fields.TextField()
-    
+
     items: fields.ReverseRelation["Item"]
     trades: fields.ManyToManyRelation["Trade"]
+
+    class PydanticMeta:
+        exclude = ("items","trades")
+
+
+# Users_Pydantic=pydantic_queryset_creator(User)
+# User_Pydantic = pydantic_model_creator(User)
+
 
 class Item(Model):
     id = fields.IntField(pk=True)
@@ -22,17 +31,19 @@ class Item(Model):
     owner: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User", related_name="items"
     )
+Item_Pydantic = pydantic_model_creator(Item)
 
 class Trade(Model):
     id = fields.IntField(pk=True)
-    
+
     participants: fields.ManyToManyRelation[User] = fields.ManyToManyField(
         "models.User", related_name="trades", through="user_trade"
     )
 
     items: fields.ManyToManyRelation[Item] = fields.ManyToManyField(
-        "models.Item", through = "item_trade"
+        "models.Item", through="item_trade"
     )
+
 
 class RegistrationConfirm(Model):
     token = fields.CharField(pk=True, index=True, max_length=64)
@@ -40,9 +51,9 @@ class RegistrationConfirm(Model):
         "models.User"
     )
 
+
 class AuthToken(Model):
     token = fields.CharField(pk=True, index=True, max_length=64)
     user: fields.OneToOneRelation[User] = fields.OneToOneField(
         "models.User"
     )
-    
