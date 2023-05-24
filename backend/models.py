@@ -1,8 +1,10 @@
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 from tortoise.models import Model
-from tortoise import fields
+from tortoise import fields, Tortoise
+from typing import Optional
 
 
+# User_Pydantic = pydantic_model_creator(User)
 
 class User(Model):
     id = fields.IntField(pk=True)
@@ -14,13 +16,8 @@ class User(Model):
     items: fields.ReverseRelation["Item"]
     trades: fields.ManyToManyRelation["Trade"]
 
-    class PydanticMeta:
-        exclude = ("items","trades")
 
-
-# Users_Pydantic=pydantic_queryset_creator(User)
-# User_Pydantic = pydantic_model_creator(User)
-
+# user= User.update_or_create(items=find_item_by_id)
 
 class Item(Model):
     id = fields.IntField(pk=True)
@@ -31,7 +28,8 @@ class Item(Model):
     owner: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User", related_name="items"
     )
-Item_Pydantic = pydantic_model_creator(Item)
+
+
 
 class Trade(Model):
     id = fields.IntField(pk=True)
