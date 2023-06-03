@@ -1,21 +1,37 @@
-from pydantic import BaseModel, Field, fields
+from pydantic import BaseModel, EmailStr
 from typing import Optional
-from datetime import datetime, timezone
 
 from tortoise import Tortoise
-from tortoise.contrib.pydantic import pydantic_queryset_creator, pydantic_model_creator
+from tortoise.contrib.pydantic import pydantic_model_creator
 
 from models import User, Item, Trade
 
 Tortoise.init_models(["models"], "models")
 
+
 class UserRegistration(BaseModel):
-    username: str
+    email: EmailStr
     password: str
     name: str
 
+
+class UserGet(BaseModel):
+    id: int
+    email: str
+    name: str
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str]
+
+
+class ItemGet(BaseModel):
+    title: str
+    description: str
+    image_url: str
+
 class ItemCreation(BaseModel):
-    ... # TODO: Create schema for item creation
+    pass
 
 
 # Users_Pydantic=pydantic_queryset_creator(User)

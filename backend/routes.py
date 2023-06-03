@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -6,21 +6,42 @@ from secrets import token_urlsafe
 
 from tortoise.contrib.fastapi import HTTPNotFoundError
 
-from models import User, Item, Trade, RegistrationConfirm, RegistrationConfirm, AuthToken
-from schemas import UserRegistration, ItemCreation, Item_Pydantic, User_Pydantic, UserIn_Pydantic, ItemIn_Pydantic, \
+from models import (
+    User, Item, Trade,
+    RegistrationConfirm, RegistrationConfirm, AuthToken
+)
+
+from schemas import (
+    UserRegistration, UserGet, UserUpdate,
+    ItemGet,
+    Item_Pydantic, User_Pydantic, UserIn_Pydantic, ItemIn_Pydantic,
     Trade_Pydantic, TradeIn_Pydantic
+)
 from utils import password_hash, password_verify
+
+from dependencies import (
+    get_user_by_id, get_user_from_token
+)
+
 from datetime import datetime
 
-router = APIRouter()
+router = APIRouter(prefix="/api")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth-tokens")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth-tokens")
+
 # ALL FOR USER
 # region
+
+
 @router.post("/users", status_code=201, tags=["User"])
 async def register_user(user_registration: UserRegistration):
+    user = await User.get_or_none(email=user_registration.email)
+
+    if user is not None:
+        raise HTTPException(status_code=409, detail="Conflict")
+
     user = await User.create(
-        email=user_registration.username,
+        email=user_registration.email,
         password_hash=user_registration.password,
         name=user_registration.name,
         verified_at=None
@@ -31,74 +52,86 @@ async def register_user(user_registration: UserRegistration):
         user=user
     )
 
-    print(confirm.token)  # TODO: Send this token to the user's email
+    # temporary confirm registration for testing
+    await confirm_registration(confirm.token, user)
 
-    return f"Registration confirmation sent"
+    return "Confirmation email sent"
 
 
-@router.post("/users/{user_id}/verification", status_code=201, tags=["User"])
-async def confirm_registration(token: str, user_id: int):
-    user = await User.get_or_none(id=user_id)
-
-    if user is None:
-        return HTTPException(status_code=404, detail="Not found")
-
+@router.post(
+    "/users/{user_id}/verification",
+    status_code=201,
+    tags=["User"]
+)
+async def confirm_registration(
+    token: str,
+    user: Annotated[User, Depends(get_user_by_id)],
+):
     confirm = await RegistrationConfirm.get_or_none(
         token=token,
-        user_id=user_id
+        user_id=user.id
     )
 
     if confirm is None:
         raise HTTPException(status_code=403, detail="Forbidden")
+
+    await confirm.delete()
 
     user.verified_at = datetime.now()
 
     await user.save()
 
 
-@router.get("/users", status_code=201, response_model=List[User_Pydantic], tags=["User"])
+@router.get("/users", response_model=list[UserGet], tags=["User"])
 async def get_users():
-    return await User_Pydantic.from_queryset(User.all())
+    return await User.all()
 
 
-@router.get("/users/{user_id}", status_code=201, response_model=User_Pydantic,
-            responses={404: {"model": HTTPNotFoundError}}, tags=["User"])
+@router.get("/users/{user_id}", response_model=UserGet, tags=["User"])
 async def get_user(user_id: int):
-    return await User_Pydantic.from_queryset_single(User.get(id=user_id))
-
-
-@router.post("/users_create", status_code=201, response_model=User_Pydantic, tags=["User"])
-async def create_user(user: User_Pydantic):
-    user_obj = await User.create(**user.dict(exclude_unset=True))
-    return await User_Pydantic.from_tortoise_orm(user_obj)
-
-
-@router.put("/users", status_code=201, tags=["User"])
-async def update_user(user: UserIn_Pydantic, user_id: int):
-    # ТУТ НИЧЕГО НЕ МЕНЯТЬ УЕБИЩЕ НА КЛАССЕ
-    userr = await User.get(id=user_id)
-    data = user.dict()
-    await userr.update_from_dict(data)
-    await userr.save()
-    return "1"
-
-
-@router.delete("/user/{user_id}", responses={404: {"model": HTTPNotFoundError}}, tags=["User"])
-async def delete_user(user_id: int):
-    deleted_count = await User.filter(id=user_id).delete()
-    if not deleted_count:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
-    return f"Deleted user {user_id}"
-
-
-@router.post("/auth-tokens", status_code=201, tags=["User"])
-async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = await User.get_or_none(email=form_data.username)
+    user = await User.get_or_none(id=user_id)
 
     if user is None:
         raise HTTPException(status_code=404, detail="Not found")
 
-    if not password_verify(form_data.password, user.password_hash):
+    return user
+
+
+@router.put("/users/{user_id}", status_code=204, tags=["User"])
+async def update_user(user_id: int, data: UserUpdate):
+    user = await User.get_or_none(id=user_id)
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    await user.update_from_dict(data.dict()).save()
+
+
+@router.delete(
+    "/user/{user_id}",
+    status_code=204,
+    responses={404: {"model": HTTPNotFoundError}},
+    tags=["User"]
+)
+async def delete_user(user_id: int):
+    deleted_count = await User.filter(id=user_id).delete()
+    if not deleted_count:
+        raise HTTPException(
+            status_code=404,
+            detail=f"User {user_id} not found"
+        )
+
+
+@router.post("/auth-tokens", status_code=201, tags=["User"])
+async def login_user(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+):
+    user = await User.get_or_none(email=form_data.username)
+
+    if (
+        user is None or
+        not password_verify(form_data.password, user.password_hash)
+    ):
         raise HTTPException(status_code=403, detail="Forbidden")
 
     token = await AuthToken.create(
@@ -116,24 +149,39 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
 # ALL FOR ITEM
 # region
 
-@router.get("/items", status_code=201, response_model=List[Item_Pydantic], tags=["Item"])
+
+@router.get(
+    "/items",
+    status_code=200,
+    response_model=list[ItemGet],
+    tags=["Item"]
+)
 async def get_items():
-    return await Item_Pydantic.from_queryset(Item.all())
+    return await Item.all()
 
 
-@router.get("/items/{item_id}", status_code=201, response_model=Item_Pydantic,
-            responses={404: {"model": HTTPNotFoundError}}, tags=["Item"])
+@router.get(
+    "/items/{item_id}",
+    status_code=200,
+    response_model=ItemGet,
+    responses={404: {"model": HTTPNotFoundError}},
+    tags=["Item"]
+)
 async def get_item(item_id: int):
-    return await Item_Pydantic.from_queryset_single(Item.get(id=item_id))
+    item = await Item.get_or_none(id=item_id)
+
+    if item is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    return item
 
 
 @router.post("/items", status_code=201, tags=["Item"])
 async def create_item(item: ItemIn_Pydantic, user_id: int):
-    user= await User.get(id=user_id)
+    user = await User.get(id=user_id)
+ 
 
-    print(item.dict())
     item_obj = await Item.create(**item.dict(exclude_unset=True),owner=user)
-    return "1"
 
 
 @router.put("/items", status_code=201, tags=["Item"])
@@ -161,7 +209,7 @@ async def delete_item(item_id: int):
 # ALL FOR TRADE
 # region
 
-@router.get("/trades", status_code=201, response_model=List[Trade_Pydantic], tags=["Trade"])
+@router.get("/trades", status_code=201, response_model=list[Trade_Pydantic], tags=["Trade"])
 async def get_trades():
     return await Trade_Pydantic.from_queryset(Trade.all())
 

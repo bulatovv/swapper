@@ -17,8 +17,6 @@ class User(Model):
     trades: fields.ManyToManyRelation["Trade"]
 
 
-# user= User.update_or_create(items=find_item_by_id)
-
 class Item(Model):
     id = fields.IntField(pk=True)
     title = fields.TextField()
@@ -28,7 +26,6 @@ class Item(Model):
     owner: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User", related_name="items"
     )
-
 
 
 class Trade(Model):
@@ -52,6 +49,6 @@ class RegistrationConfirm(Model):
 
 class AuthToken(Model):
     token = fields.CharField(pk=True, index=True, max_length=64)
-    user: fields.OneToOneRelation[User] = fields.OneToOneField(
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User"
     )

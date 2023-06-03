@@ -1,9 +1,27 @@
 <script>
+    import { applyAction, deserialize } from '$app/forms';
+
+    /** @type {import('./$types').ActionData} */
+    export let form;
+    
     let email = '';
     let password = '';
-    let passwordConfirm = '';
 
-    function handleSubmit() {
+
+
+    async function handleSubmit() {
+        const data = new FormData();
+        data.append('email', email);
+        data.append('password', password);
+
+        const response = await fetch(this.action, {
+            method: 'POST',
+            body: data,
+        });
+
+        const result = deserialize(await response.text());
+        
+        await applyAction(result);
     }
 </script>
 
@@ -19,6 +37,9 @@
         <input bind:value={password}
                class="w-full rounded-md border-[1px] border-gray-400 px-1 py-1 mb-2"
                type="password" name="password" id="password" required>
+        {#if form?.wrongCredentials}
+            <p class="text-red-500 text-sm">Неверный логин или пароль</p>
+        {/if}
 
         <div class="flex">
             <button type="submit"
