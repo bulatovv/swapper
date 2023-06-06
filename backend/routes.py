@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Body, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from secrets import token_urlsafe
 
@@ -33,12 +33,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth-tokens")
 # region
 
 
-@router.post("/users", status_code=201, tags=["User"])
+@router.post("/users", status_code=status.HTTP_201_CREATED, tags=["User"])
 async def register_user(user_registration: UserRegistration):
     user = await User.get_or_none(email=user_registration.email)
 
     if user is not None:
-        raise HTTPException(status_code=409, detail="Conflict")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Conflict")
 
     user = await User.create(
         email=user_registration.email,
@@ -73,7 +73,10 @@ async def confirm_registration(
     )
 
     if confirm is None:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden"
+        )
 
     await confirm.delete()
 
@@ -82,47 +85,51 @@ async def confirm_registration(
     await user.save()
 
 
-@router.get("/users", response_model=list[UserGet], tags=["User"])
-async def get_users():
+@router.get("/users", tags=["User"])
+async def get_users() -> list[UserGet]:
     return await User.all()
 
 
-@router.get("/users/{user_id}", response_model=UserGet, tags=["User"])
-async def get_user(user_id: int):
-    user = await User.get_or_none(id=user_id)
-
-    if user is None:
-        raise HTTPException(status_code=404, detail="Not found")
-
+@router.get("/users/{user_id}", tags=["User"])
+async def get_user(user: Annotated[User, Depends(get_user_by_id)]) -> UserGet:
     return user
 
 
-@router.put("/users/{user_id}", status_code=204, tags=["User"])
-async def update_user(user_id: int, data: UserUpdate):
-    user = await User.get_or_none(id=user_id)
+@router.get("/users/me", tags=["User"])
+async def get_session_user(
+    user: Annotated[User, Depends(get_user_from_token)]
+) -> UserGet:
+    return user
 
-    if user is None:
-        raise HTTPException(status_code=404, detail="Not found")
 
+@router.put(
+    "/users/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["User"]
+)
+async def update_user(
+    user: Annotated[User, Depends(get_user_by_id)],
+    data: UserUpdate
+):
     await user.update_from_dict(data.dict()).save()
 
 
 @router.delete(
     "/user/{user_id}",
-    status_code=204,
-    responses={404: {"model": HTTPNotFoundError}},
+    status_code=status.HTTP_204_NO_CONTENT,
     tags=["User"]
 )
-async def delete_user(user_id: int):
-    deleted_count = await User.filter(id=user_id).delete()
-    if not deleted_count:
-        raise HTTPException(
-            status_code=404,
-            detail=f"User {user_id} not found"
-        )
+async def delete_user(user: Annotated[User, Depends(get_user_by_id)]):
+    await user.delete()
+
+# endregion
 
 
-@router.post("/auth-tokens", status_code=201, tags=["User"])
+@router.post(
+    "/auth-tokens",
+    status_code=status.HTTP_201_CREATED,
+    tags=["Auth"]
+)
 async def login_user(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
@@ -132,7 +139,10 @@ async def login_user(
         user is None or
         not password_verify(form_data.password, user.password_hash)
     ):
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden"
+        )
 
     token = await AuthToken.create(
         token=token_urlsafe(32),
@@ -144,7 +154,23 @@ async def login_user(
         "token_type": "bearer"
     }
 
-# endregion
+
+@router.delete(
+    "/auth-tokens",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Auth"]
+)
+async def logout_user(
+    access_token: Annotated[str, Depends(oauth2_scheme)],
+):
+    deleted_count = await AuthToken.filter(token=access_token).delete()
+
+    if not deleted_count:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not found"
+        )
+
 
 # ALL FOR ITEM
 # region

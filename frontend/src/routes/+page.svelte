@@ -3,6 +3,7 @@
     import ReplyCard from '$lib/ReplyCard.svelte';
     import SwapCard from '$lib/SwapCard.svelte';
     import { Tabs, TabList, TabPanel, Tab } from './tabs.js';
+
     /** @type {import('./$types').PageData} */
     export let data;
 </script>

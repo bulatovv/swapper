@@ -41,9 +41,9 @@
             <p class="text-red-500 text-sm">Неверный логин или пароль</p>
         {/if}
 
-        <div class="flex">
+        <div class="flex mb-2">
             <button type="submit"
-                    class="font-bold uppercase trackling-widest bg-orange-400 text-slate-50 rounded-sm p-2 mt-2 ml-auto">
+                    class="font-bold uppercase trackling-widest bg-orange-400 text-slate-50 rounded-md p-2 mt-2 ml-auto">
                 Войти
                 <i class="bi bi-arrow-right font-bold"></i>
             </button>
@@ -51,7 +51,7 @@
 
         <div class="flex">
             <p class = "ml-auto">
-                у вас нет аккаунта?
+                Нет аккаунта? <a href="/register" class="text-orange-400 underline">Зарегистрируйтесь</a>
             </p>
         </div>
     </form>

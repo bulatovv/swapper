@@ -62,7 +62,7 @@
             <button type="submit"
                     disabled={!validated.all}
                     class:bg-gray-400={!validated.all}
-                    class="font-bold uppercase trackling-widest bg-orange-400 text-slate-50 rounded-sm p-2 mt-2 ml-auto">
+                    class="font-bold uppercase trackling-widest bg-orange-400 text-slate-50 rounded-md p-2 mt-2 ml-auto">
                 Зарегистрироваться
                 <i class="bi bi-arrow-right font-bold"></i>
             </button>

@@ -3,7 +3,7 @@ from models import User, AuthToken
 from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth-tokens")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth-tokens")
 
 
 async def get_user_from_token(token: Annotated[str, Depends(oauth2_scheme)]):
