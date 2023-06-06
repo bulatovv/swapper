@@ -10,9 +10,14 @@ export async function load({ cookies }) {
         return {};
     }
 
-    const response = await fetch(`${PUBLIC_API_URL}/users/me`);
+    const response = await fetch(`${PUBLIC_API_URL}/users/me`, {
+		headers: {
+			'Authorization': `Bearer ${accessToken}`,
+		}
+	});
     const user = await response.json();
-
+	
+	console.log(user);
 
     return { user };
 }

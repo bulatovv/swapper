@@ -21,10 +21,12 @@ CREATE TABLE IF NOT EXISTS "authtoken" (
 CREATE TABLE IF NOT EXISTS "item" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     "title" TEXT NOT NULL,
+    "slug" VARCHAR(48) NOT NULL UNIQUE,
     "description" TEXT NOT NULL,
     "image_url" TEXT NOT NULL,
     "owner_id" INT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE
 );
+CREATE INDEX IF NOT EXISTS "idx_item_slug_842a3f" ON "item" ("slug");
 CREATE TABLE IF NOT EXISTS "registrationconfirm" (
     "token" VARCHAR(64) NOT NULL  PRIMARY KEY,
     "user_id" INT NOT NULL UNIQUE REFERENCES "user" ("id") ON DELETE CASCADE
@@ -35,13 +37,13 @@ CREATE TABLE IF NOT EXISTS "aerich" (
     "app" VARCHAR(100) NOT NULL,
     "content" JSON NOT NULL
 );
-CREATE TABLE IF NOT EXISTS "item_trade" (
-    "trade_id" INT NOT NULL REFERENCES "trade" ("id") ON DELETE CASCADE,
-    "item_id" INT NOT NULL REFERENCES "item" ("id") ON DELETE CASCADE
-);
 CREATE TABLE IF NOT EXISTS "user_trade" (
     "trade_id" INT NOT NULL REFERENCES "trade" ("id") ON DELETE CASCADE,
     "user_id" INT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS "item_trade" (
+    "trade_id" INT NOT NULL REFERENCES "trade" ("id") ON DELETE CASCADE,
+    "item_id" INT NOT NULL REFERENCES "item" ("id") ON DELETE CASCADE
 );"""
 
 

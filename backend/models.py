@@ -1,7 +1,10 @@
+from settings import settings
+
 from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 from tortoise.models import Model
 from tortoise import fields, Tortoise
 from typing import Optional
+
 
 
 # User_Pydantic = pydantic_model_creator(User)
@@ -20,6 +23,7 @@ class User(Model):
 class Item(Model):
     id = fields.IntField(pk=True)
     title = fields.TextField()
+    slug = fields.CharField(unique=True, index=True, max_length=settings.slug_length)
     description = fields.TextField()
     image_url = fields.TextField()
 

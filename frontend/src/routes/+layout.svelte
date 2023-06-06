@@ -3,7 +3,8 @@
     import "bootstrap-icons/font/bootstrap-icons.css";
 
     import { clickOutside } from '$lib/clickOutside.js'
-    import { slide } from 'svelte/transition';
+	import { slide } from 'svelte/transition';
+	import { invalidateAll } from '$app/navigation';
     import { applyAction, deserialize } from '$app/forms';
 
 
@@ -11,7 +12,11 @@
     
     function toggleMenu() {
         menuExpanded = !menuExpanded;
-    }
+	}
+
+	function hideMenu() {
+		menuExpanded = false;
+	}
 
 
     async function logout() {
@@ -21,6 +26,10 @@
         });
 
         const result = deserialize(await res.text());
+
+		if (result.type === 'success') {
+			await invalidateAll();
+        }
 
         await applyAction(result);
     }
@@ -38,7 +47,7 @@
 
 
         {#if data.user}
-            <div use:clickOutside on:clickOutside="{toggleMenu}" class="relative ml-auto">
+            <div use:clickOutside on:clickOutside="{hideMenu}" class="relative ml-auto">
                 <button on:click="{toggleMenu}" class="text-white bg-orange-400 rounded-md px-2 py-1 mr-2">
                     <i class="bi bi-person-circle"></i>
                     <span class="ml-2">Профиль</span>

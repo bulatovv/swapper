@@ -1,10 +1,15 @@
+from settings import settings
+
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Depends, Body, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
 from secrets import token_urlsafe
+from slugify import slugify
 
 from tortoise.contrib.fastapi import HTTPNotFoundError
+from tortoise.functions import Max
 
 from models import (
     User, Item, Trade,
@@ -13,14 +18,15 @@ from models import (
 
 from schemas import (
     UserRegistration, UserGet, UserUpdate,
-    ItemGet,
+    ItemGet, ItemCreation,
     Item_Pydantic, User_Pydantic, UserIn_Pydantic, ItemIn_Pydantic,
     Trade_Pydantic, TradeIn_Pydantic
 )
 from utils import password_hash, password_verify
 
 from dependencies import (
-    get_user_by_id, get_user_from_token
+    get_user_by_id, get_user_from_token,
+    get_item_by_slug_or_id
 )
 
 from datetime import datetime
@@ -85,20 +91,20 @@ async def confirm_registration(
     await user.save()
 
 
-@router.get("/users", tags=["User"])
-async def get_users() -> list[UserGet]:
+@router.get("/users", tags=["User"], response_model=list[UserGet])
+async def get_users():
     return await User.all()
 
 
-@router.get("/users/{user_id}", tags=["User"])
-async def get_user(user: Annotated[User, Depends(get_user_by_id)]) -> UserGet:
+@router.get("/users/me", tags=["User"], response_model=UserGet)
+async def get_session_user(
+    user: Annotated[User, Depends(get_user_from_token)],
+):
     return user
 
 
-@router.get("/users/me", tags=["User"])
-async def get_session_user(
-    user: Annotated[User, Depends(get_user_from_token)]
-) -> UserGet:
+@router.get("/users/{user_id}", tags=["User"], response_model=UserGet)
+async def get_user(user: Annotated[User, Depends(get_user_by_id)]):
     return user
 
 
@@ -178,7 +184,7 @@ async def logout_user(
 
 @router.get(
     "/items",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     response_model=list[ItemGet],
     tags=["Item"]
 )
@@ -188,26 +194,39 @@ async def get_items():
 
 @router.get(
     "/items/{item_id}",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     response_model=ItemGet,
-    responses={404: {"model": HTTPNotFoundError}},
     tags=["Item"]
 )
-async def get_item(item_id: int):
-    item = await Item.get_or_none(id=item_id)
-
-    if item is None:
-        raise HTTPException(status_code=404, detail="Not found")
-
+async def get_item(item: Annotated[Item, Depends(get_item_by_slug_or_id)]):
     return item
 
 
-@router.post("/items", status_code=201, tags=["Item"])
-async def create_item(item: ItemIn_Pydantic, user_id: int):
-    user = await User.get(id=user_id)
- 
+@router.post("/items", status_code=status.HTTP_201_CREATED, tags=["Item"])
+async def create_item(
+    item: ItemCreation,
+    user: Annotated[User, Depends(get_user_by_id)]
+):
+    slug = slugify(item.title, max_length=settings.slug_length)
 
-    item_obj = await Item.create(**item.dict(exclude_unset=True),owner=user)
+    last_item = (
+        await Item
+        .filter(slug__startswith=slug)
+        .order_by("-id")
+        .first()
+    )
+
+    if last_item is not None:
+        slug += f"-{last_item.id + 1}"
+
+    await Item.create(
+        title=item.title,
+        slug=slug,
+        description=item.description,
+        image_url=item.image_url,
+        user=user
+    )
+
 
 
 @router.put("/items", status_code=201, tags=["Item"])

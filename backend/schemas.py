@@ -1,4 +1,6 @@
-from pydantic import BaseModel, EmailStr
+from settings import settings
+
+from pydantic import BaseModel, EmailStr, validator
 from typing import Optional
 
 from tortoise import Tortoise
@@ -27,12 +29,23 @@ class UserUpdate(BaseModel):
 
 class ItemGet(BaseModel):
     title: str
+    slug: str
     description: str
     image_url: str
 
-class ItemCreation(BaseModel):
-    pass
 
+class ItemCreation(BaseModel):
+    title: str
+    description: str
+    image_url: str
+
+    @validator('image_url')
+    def image_url_must_be_in_allowed_hosts(cls, v):
+        if not any(
+            [v.startswith(host) for host in settings.allowed_img_hosts]
+        ):
+            raise ValueError("Image URL must be in allowed hosts")
+        return v
 
 # Users_Pydantic=pydantic_queryset_creator(User)
 User_Pydantic=pydantic_model_creator(User)
