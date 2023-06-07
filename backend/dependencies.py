@@ -1,6 +1,6 @@
 from typing import Annotated
 from models import User, Item, AuthToken
-from fastapi import HTTPException, Depends, status
+from fastapi import HTTPException, Depends, Body, status
 from fastapi.security import OAuth2PasswordBearer
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth-tokens")
@@ -19,6 +19,18 @@ async def get_user_from_token(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 async def get_user_by_id(user_id: int):
+    user = await User.get_or_none(id=user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    return user
+
+
+async def get_user_by_id_body(user_id: Annotated[int, Body()]):
     user = await User.get_or_none(id=user_id)
 
     if user is None:

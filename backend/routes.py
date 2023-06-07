@@ -10,6 +10,7 @@ from slugify import slugify
 
 from tortoise.contrib.fastapi import HTTPNotFoundError
 from tortoise.functions import Max
+from tortoise.transactions import in_transaction
 
 from models import (
     User, Item, Trade,
@@ -25,7 +26,7 @@ from schemas import (
 from utils import password_hash, password_verify
 
 from dependencies import (
-    get_user_by_id, get_user_from_token,
+    get_user_by_id, get_user_from_token, get_user_by_id_body,
     get_item_by_slug_or_id
 )
 
@@ -205,27 +206,23 @@ async def get_item(item: Annotated[Item, Depends(get_item_by_slug_or_id)]):
 @router.post("/items", status_code=status.HTTP_201_CREATED, tags=["Item"])
 async def create_item(
     item: ItemCreation,
-    user: Annotated[User, Depends(get_user_by_id)]
+    user: Annotated[User, Depends(get_user_by_id_body)]
 ):
     slug = slugify(item.title, max_length=settings.slug_length)
 
-    last_item = (
-        await Item
-        .filter(slug__startswith=slug)
-        .order_by("-id")
-        .first()
-    )
+    async with in_transaction():
+        existing_item = await Item.get_or_none(slug=slug)
+        if existing_item is not None:
+            max_item = await Item.annotate(id__max=Max("id")).first()
+            slug = f"{slug}-{max_item.id + 1}"
 
-    if last_item is not None:
-        slug += f"-{last_item.id + 1}"
-
-    await Item.create(
-        title=item.title,
-        slug=slug,
-        description=item.description,
-        image_url=item.image_url,
-        user=user
-    )
+        await Item.create(
+            title=item.title,
+            slug=slug,
+            description=item.description,
+            image_url=item.image_url,
+            owner=user
+        )
 
 
 

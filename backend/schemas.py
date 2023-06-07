@@ -8,6 +8,8 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 
 from models import User, Item, Trade
 
+from urllib.parse import urlparse
+
 Tortoise.init_models(["models"], "models")
 
 
@@ -41,9 +43,9 @@ class ItemCreation(BaseModel):
 
     @validator('image_url')
     def image_url_must_be_in_allowed_hosts(cls, v):
-        if not any(
-            [v.startswith(host) for host in settings.allowed_img_hosts]
-        ):
+        host = urlparse(v).netloc
+
+        if host in settings.allowed_img_hosts and not host == '':
             raise ValueError("Image URL must be in allowed hosts")
         return v
 
